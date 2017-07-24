@@ -23,7 +23,7 @@ import re
 from hashlib import sha1
 
 from dateutil.parser import parse as dateparse
-
+from subprocess import check_output
 from twisted.python import log
 
 from buildbot.util import bytes2NativeString
@@ -221,10 +221,11 @@ class GogsEventHandler(object):
     def handle_pull_request(self, payload, event):
         repo_url = payload['repository']['html_url']
         number = payload['number']
-        refname = payload['pull_request']['head_branch'] #not ideal. This could change
+        refname = 'refs/pull/{}/head'.format(number)
         title = payload['pull_request']['title']
         comments = payload['pull_request']['body']
         project = payload['pull_request']['base_repo']['full_name']
+        repo = payload['pull_request']['base_repo']['clone_url']
 
         log.msg('Processing Gogs Pull Request #{}'.format(number),
                 logLevel=logging.DEBUG)
@@ -241,11 +242,11 @@ class GogsEventHandler(object):
 
         change = {
             'codebase': self.get_codebase(payload),
-            'revision': refname, #REALLY not ideal
+            'revision': check_output(['git', 'ls-remote', repo, refname]).split()[0],
             'when_timestamp': dateparse(payload['pull_request']['head_repo']['updated_at']),#not quite right
             'branch': refname,
             'revlink': u'{}/pulls/{}'.format(repo_url, number),
-            'repository': payload['pull_request']['head_repo']['clone_url'],
+            'repository': repo,
             'project': project,
             'category': 'pull',
             'author': u'{} <{}>'.format(payload['pull_request']['user']['full_name'],
