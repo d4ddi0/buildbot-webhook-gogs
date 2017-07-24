@@ -231,7 +231,7 @@ class GogsEventHandler(object):
                 logLevel=logging.DEBUG)
 
         action = payload.get('action')
-        if action not in ('opened', 'reopened', 'synchronize'):
+        if action not in ('opened', 'reopened', 'synchronized'):
             log.msg("Gogs Pull Request #{} {}, ignoring".format(number, action))
             return []
 
