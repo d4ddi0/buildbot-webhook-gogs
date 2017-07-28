@@ -29,6 +29,7 @@ from twisted.python import log
 from buildbot.util import bytes2NativeString
 from buildbot.util import unicode2bytes
 from buildbot.www.hooks.base import BaseHookHandler
+from time import sleep
 
 _HEADER_CT = b'Content-Type'
 _HEADER_EVENT = b'X-Gogs-Event'
@@ -218,6 +219,10 @@ class GogsEventHandler(object):
 
         return [change,]
 
+    def get_pull_request_rev(self, repo, refname):
+        sleep(0.1)
+        return check_output(['git', 'ls-remote', repo, refname]).split()[0]
+
     def handle_pull_request(self, payload, event):
         repo_url = payload['repository']['html_url']
         number = payload['number']
@@ -242,7 +247,7 @@ class GogsEventHandler(object):
 
         change = {
             'codebase': self.get_codebase(payload),
-            'revision': check_output(['git', 'ls-remote', repo, refname]).split()[0],
+            'revision': self.get_pull_request_rev(repo, refname),
             'when_timestamp': dateparse(payload['pull_request']['head_repo']['updated_at']),#not quite right
             'branch': refname,
             'revlink': u'{}/pulls/{}'.format(repo_url, number),
